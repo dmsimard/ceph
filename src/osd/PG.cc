@@ -1005,6 +1005,24 @@ bool PG::choose_acting(int& newest_update_osd)
     return false;
   }
 
+  vector<int> allpeers;
+  allpeers = want;
+  OSDMapRef osdmap = get_osdmap();
+  const OSDMap *omp = osdmap.get();
+  dout(0) << "OSDMapRef=" << osdmap << " omp=" << omp << dendl;
+  allpeers.insert(allpeers.end(), backfill.begin(), backfill.end());
+  for (unsigned i = 0 ; i < allpeers.size(); ++i) {
+    int peer = allpeers[i];
+
+    JSONFormatter f(true);
+    const osd_xinfo_t& xi = osdmap->get_xinfo(peer);
+    xi.dump((Formatter*)&f);
+    dout(0) << __func__ << " xinfo osd." << peer << ": ";
+    f.flush(*_dout);
+    *_dout << dendl;
+    assert(xi.features != 0);
+  }
+  
   // For now we only backfill 1 at a time as before
   if (!backfill.empty())
     backfill.resize(1);
